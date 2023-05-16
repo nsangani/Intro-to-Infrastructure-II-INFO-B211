@@ -1,0 +1,353 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[273]:
+
+
+import pandas as pd
+
+df = pd.read_csv("spam_ham_dataset.csv")
+
+#Preprocessing 1.1: Get the shape of the dataset
+#Preprocessing 1.2:  Using one of the built-in functions for one of the libraries that you have learned during this course, define how many emails are spam (label_num=1) and how many emails are not spam (label_num=0).
+
+spam = df[df['label_num']==1]
+
+not_spam = df[df['label_num']==0]
+
+print(df.shape)
+print(spam.shape)
+print(not_spam.shape)
+
+xyz = ['spam','not_spam'] 
+
+df.head()
+
+
+# In[ ]:
+
+
+
+
+
+# In[274]:
+
+
+#Preprocessing 1.3:Plot a bar graph that shows the counts of spam and non-spam emails.
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+ax = sns.countplot(x='label_num', 
+              data=df)
+
+ax.set_xticklabels(('Spam','Not Spam'))
+
+plt.show()
+
+
+# In[275]:
+
+
+#PreProcessing 1.4: Tokenize the email subject text of the 140th sample of the dataset once into words. How many words have you got after tokenization?
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+
+sentences = df['text'][140]
+
+words = word_tokenize(sentences)
+print(words)
+
+len(words)
+
+
+# Preprocessing 1.5: 
+# 
+# Clean the email subject text of the 1265th sample of the dataset by removing stopwords. How many stopwords are in that text? Also, how many words are in the filtered/ clean text?
+
+# In[276]:
+
+
+words = word_tokenize(df['text'][1265])
+# print(words)
+
+# remove stopwords
+stop_words = set(stopwords.words("english"))
+#print(stop_words)
+
+stopwordsRemovalList = []
+filterList = []
+for x in words:
+    if x.lower() not in stop_words:
+        filterList.append(x.lower())
+    stopwordsRemovalList.append(filterList)
+print(len(stopwordsRemovalList)) #Stopwords in that text
+print(len(filterList)) #Filtered/Clean text
+
+
+# Preprocessing 1.6:
+# 
+# Reduce the words of the email subject text of the 1835th sample of the dataset to its word root by performing stemming and to its meaningful base by performing lemmatization. Next check if stemming and lemmatization outputs are equal.
+
+# In[277]:
+
+
+#Part a: 
+words = word_tokenize(df['text'][1835])
+#print(words)
+
+#stemmer - Ask Anuja about special characters how to fix it; why is stem not right. 
+stemmer = PorterStemmer()
+
+filterList = []
+for word in words:
+    print(word)
+    filterList.append(stemmer.stem(word))
+print(([filterList]))
+
+
+# In[278]:
+
+
+#Part B
+
+#Lemmatization
+
+lemmatizer = WordNetLemmatizer()
+
+filterList = []
+for word in words:
+    filterList.append(lemmatizer.lemmatize(word))
+print((filterList))
+
+
+# Preprocessing 1.7:
+# Make a part of speech (POS) tagging to words of the email subject text of the 5011th sample of the dataset and print the POS tag of each word and its description by querying about it.
+
+# In[279]:
+
+
+words = word_tokenize(df['text'][5011])
+
+tag = nltk.pos_tag(words)
+print(tag)
+
+for words in tag:
+    if words[1]=='JJ' or words[1]=='NN':
+        print(words)
+
+
+# # 2. Feature Generation(5 points)
+# • Generate features from email subject texts in your dataset once using the bag of words approach and another time using the TF-IDF approach.
+
+# In[280]:
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+
+def feature_bow(text): # feature generation using BoW   
+    cv = CountVectorizer()  # most frequent words to choose as features
+    features = cv.fit_transform(text)  #Text is the column texts/docs in spam_ham_dataset.
+    print(features.shape)
+    return features
+
+
+alpha = feature_bow(df['text'])
+
+for i in alpha:
+    print(i)
+
+
+# In[281]:
+
+
+def feature_tfidf(text): # feature generation using TF-IDF
+    tf = TfidfVectorizer()
+    features = tf.fit_transform(text)  # data[‘phrase’] is column of texts/docs in spam_ham dataset.
+    print(features.shape)
+    return features
+
+beta = feature_tfidf(df['text'])
+
+
+for i in beta:
+    print(i)
+
+
+# # 3. Text Classification(10 points) [2+2+2+2+2]
+# 
+# 
+# • Develop a random forest classifier / SVM classifier that can be trained using the features that you have generated using the bag of words approach and fit on 80 % of this dataset for training and predict the class of email either spam or not on the remaining 20 % of this dataset.
+# 
+# • Test your classifier's performance by reporting its accuracy, precision, recall, and F1 score.
+# 
+# • Again, develop a random forest classifier that can be trained using the features that you have generated using the TF-IDF approach and fit on 80 % of this dataset for training and predict the class of email either spam or not on the remaining 20 % of this dataset.
+# 
+# • Test your classifier's performance by reporting its accuracy/ precision/ recall/ F1 score.
+# 
+# • Compare the performance results of your classifier when trained with the features generated by the bag of words approach and when trained with the features generated by the TF-IDF approach.
+# Write your conclusion about the performance comparison in the markdown cell of jupyter.
+
+# In[282]:
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+
+def rf_clf(X_train, X_test, y_train, y_test):
+    clf = RandomForestClassifier(n_estimators=500,
+                                    min_samples_leaf=2,
+                                    oob_score=True,
+                                    n_jobs=-1, )
+    model = clf.fit(X_train, y_train)
+    predicted = model.predict(X_test)
+    acc = metrics.accuracy_score(y_test, predicted) * 100
+    print("Random Forest Accuracy:", round(acc, 2))
+    f1 = f1_score(y_test, predicted)
+    print("F1 score:", f1)
+    pre = precision_score (y_test, predicted) 
+    print("Precision:", pre)
+    re = recall_score(y_test, predicted)
+    print("Recall:", re)
+    
+    
+
+def data_split(features, target): # data split for training and testing
+    X = features
+    y = target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    return X_train, X_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = data_split(alpha, df['label_num']) ######Using RandomForest on BoW####
+
+rf_clf(X_train, X_test, y_train, y_test)
+
+#print(alpha.shape)
+#print(df['label_num'].shape)
+
+
+# In[283]:
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+
+def rf_clf(X_train, X_test, y_train, y_test):
+    clf = RandomForestClassifier(n_estimators=500,
+                                    min_samples_leaf=2,
+                                    oob_score=True,
+                                    n_jobs=-1, )
+    model = clf.fit(X_train, y_train)
+    predicted = model.predict(X_test)
+    acc = metrics.accuracy_score(y_test, predicted) * 100
+    print("Random Forest Accuracy:", round(acc, 2))
+    f1 = f1_score(y_test, predicted)
+    print("F1 score:", f1)
+    pre = precision_score (y_test, predicted) 
+    print("Precision:", pre)
+    re = recall_score(y_test, predicted)
+    print("Recall:", re)
+    
+    
+
+def data_split(features, target): # data split for training and testing
+    X = features
+    y = target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    return X_train, X_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = data_split(beta, df['label_num']) ###Using RandomForest on TF-IDF####
+
+rf_clf(X_train, X_test, y_train, y_test)
+
+#print(beta.shape)
+#print(df['label_num'].shape)
+
+
+# In[284]:
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+
+def svm_clf(X_train, X_test, y_train, y_test): # building support vector machine classifer
+    clf = svm.SVC() 
+    model = clf.fit(X_train, y_train)
+    predicted = model.predict(X_test)
+    acc = metrics.accuracy_score(y_test, predicted)*100
+    print("SVM Accuracy:", round(acc,2))
+    f1 = f1_score(y_test, predicted)
+    print("F1 score:", f1)
+    pre = precision_score (y_test, predicted) 
+    print("Precision:", pre)
+    re = recall_score(y_test, predicted)
+    print("Recall:", re)
+    
+    
+
+def data_split(features, target): # data split for training and testing
+    X = features
+    y = target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    return X_train, X_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = data_split(alpha, df['label_num']) ######Using SVM on BoW####
+
+svm_clf(X_train, X_test, y_train, y_test)
+
+#print(alpha.shape)
+#print(df['label_num'].shape)
+
+
+# In[285]:
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+
+def svm_clf(X_train, X_test, y_train, y_test): # building support vector machine classifer
+    clf = svm.SVC() 
+    model = clf.fit(X_train, y_train)
+    predicted = model.predict(X_test)
+    acc = metrics.accuracy_score(y_test, predicted)*100
+    print("SVM Accuracy:", round(acc,2))
+    f1 = f1_score(y_test, predicted)
+    print("F1 score:", f1)
+    pre = precision_score (y_test, predicted) 
+    print("Precision:", pre)
+    re = recall_score(y_test, predicted)
+    print("Recall:", re)
+    
+    
+
+def data_split(features, target): # data split for training and testing
+    X = features
+    y = target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    return X_train, X_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = data_split(beta, df['label_num']) ######Using SVM on TF-IDF####
+
+svm_clf(X_train, X_test, y_train, y_test)
+
+#print(beta.shape)
+#print(df['label_num'].shape)
+
+
+# Randomo Forest Accuracy is opposite of SVM Accuracy where is lower using alpha set, but higher in beta set. F1 score in alpha is higher in Forest Classifer than SVM. Precision is higher in both alpha and beta in Forest Classifer than SVM. Recall is lower than in Forest Random Classifer than SVM. 
+
+# In[ ]:
+
+
+
+
